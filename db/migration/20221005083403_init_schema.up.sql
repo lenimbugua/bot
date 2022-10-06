@@ -3,21 +3,25 @@ CREATE TABLE "channels" (
   "name" varchar
 );
 
-CREATE TABLE "clients" (
+CREATE TABLE "companies" (
   "id" bigserial PRIMARY KEY,
-  "name" varchar(25) NOT NULL
+  "phone" varchar(15) UNIQUE NOT NULL,
+  "name" varchar(25) NOT NULL,
+  "email" varchar(25) UNIQUE NOT NULL
 );
 
-CREATE TABLE "profiles" (
+CREATE TABLE "users" (
   "id" bigserial PRIMARY KEY,
+  "mobile" varchar UNIQUE NOT NULL,
+  "password_hash" varchar NOT NULL,
   "name" varchar(20) NOT NULL,
-  "client_id" bigint NOT NULL
+  "company_id" bigint NOT NULL
 );
 
 CREATE TABLE "questions" (
   "id" bigserial PRIMARY KEY,
   "question" text NOT NULL,
-  "client_id" bigint NOT NULL,
+  "company_id" bigint NOT NULL,
   "type" varchar NOT NULL,
   "parent_id" bigint NOT NULL,
   "channel_id" bigint NOT NULL,
@@ -33,23 +37,23 @@ CREATE TABLE "responses" (
 
 CREATE TABLE "sessions" (
   "id" bigserial PRIMARY KEY,
-  "profile_id" bigint NOT NULL,
+  "user_id" bigint NOT NULL,
   "chanell_id" bigint NOT NULL,
   "question_id" bigint NOT NULL,
   "response_id" bigint NOT NULL
 );
 
-CREATE TABLE "profile_responses" (
+CREATE TABLE "user_responses" (
   "id" bigserial PRIMARY KEY,
   "response_id" bigint NOT NULL,
-  "profile_id" bigint NOT NULL,
+  "user_id" bigint NOT NULL,
   "option_id" bigint NOT NULL,
   "question_id" bigint NOT NULL
 );
 
-ALTER TABLE "profiles" ADD FOREIGN KEY ("id") REFERENCES "clients" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
+ALTER TABLE "users" ADD FOREIGN KEY ("id") REFERENCES "companies" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
 
-ALTER TABLE "questions" ADD FOREIGN KEY ("client_id") REFERENCES "clients" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
+ALTER TABLE "questions" ADD FOREIGN KEY ("company_id") REFERENCES "companies" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 ALTER TABLE "questions" ADD FOREIGN KEY ("parent_id") REFERENCES "questions" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
 
@@ -57,7 +61,7 @@ ALTER TABLE "responses" ADD FOREIGN KEY ("question_id") REFERENCES "questions" (
 
 ALTER TABLE "sessions" ADD FOREIGN KEY ("chanell_id") REFERENCES "channels" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
 
-ALTER TABLE "sessions" ADD FOREIGN KEY ("profile_id") REFERENCES "profiles" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
+ALTER TABLE "sessions" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 ALTER TABLE "sessions" ADD FOREIGN KEY ("question_id") REFERENCES "questions" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
 
