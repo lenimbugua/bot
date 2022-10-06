@@ -7,7 +7,9 @@ CREATE TABLE "companies" (
   "id" bigserial PRIMARY KEY,
   "phone" varchar(15) UNIQUE NOT NULL,
   "name" varchar(25) NOT NULL,
-  "email" varchar(25) UNIQUE NOT NULL
+  "email" varchar(25) UNIQUE NOT NULL,
+  "created_at" timestamptz NOT NULL DEFAULT (now()),
+  "updated_at" timestamptz NOT NULL DEFAULT (now())
 );
 
 CREATE TABLE "users" (
@@ -15,7 +17,9 @@ CREATE TABLE "users" (
   "mobile" varchar UNIQUE NOT NULL,
   "password_hash" varchar NOT NULL,
   "name" varchar(20) NOT NULL,
-  "company_id" bigint NOT NULL
+  "company_id" bigint NOT NULL,
+  "created_at" timestamptz NOT NULL DEFAULT (now()),
+  "updated_at" timestamptz NOT NULL DEFAULT (now())
 );
 
 CREATE TABLE "questions" (
@@ -25,14 +29,18 @@ CREATE TABLE "questions" (
   "type" varchar NOT NULL,
   "parent_id" bigint NOT NULL,
   "channel_id" bigint NOT NULL,
-  "next_question_id" bigint NOT NULL
+  "next_question_id" bigint NOT NULL,
+  "created_at" timestamptz NOT NULL DEFAULT (now()),
+  "updated_at" timestamptz NOT NULL DEFAULT (now())
 );
 
 CREATE TABLE "responses" (
   "id" bigserial PRIMARY KEY,
   "question_id" bigint NOT NULL,
   "response" text NOT NULL,
-  "next_question_id" bigint NOT NULL
+  "next_question_id" bigint NOT NULL,
+  "created_at" timestamptz NOT NULL DEFAULT (now()),
+  "updated_at" timestamptz NOT NULL DEFAULT (now())
 );
 
 CREATE TABLE "sessions" (
@@ -40,7 +48,9 @@ CREATE TABLE "sessions" (
   "user_id" bigint NOT NULL,
   "chanell_id" bigint NOT NULL,
   "question_id" bigint NOT NULL,
-  "response_id" bigint NOT NULL
+  "response_id" bigint NOT NULL,
+  "created_at" timestamptz NOT NULL DEFAULT (now()),
+  "updated_at" timestamptz NOT NULL DEFAULT (now())
 );
 
 CREATE TABLE "user_responses" (
@@ -48,7 +58,9 @@ CREATE TABLE "user_responses" (
   "response_id" bigint NOT NULL,
   "user_id" bigint NOT NULL,
   "option_id" bigint NOT NULL,
-  "question_id" bigint NOT NULL
+  "question_id" bigint NOT NULL,
+  "created_at" timestamptz NOT NULL DEFAULT (now()),
+  "updated_at" timestamptz NOT NULL DEFAULT (now())
 );
 
 ALTER TABLE "users" ADD FOREIGN KEY ("id") REFERENCES "companies" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION;

@@ -6,6 +6,7 @@ package db
 
 import (
 	"database/sql"
+	"time"
 )
 
 type Channel struct {
@@ -14,49 +15,61 @@ type Channel struct {
 }
 
 type Company struct {
-	ID    int64  `json:"id"`
-	Phone string `json:"phone"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	ID        int64     `json:"id"`
+	Phone     string    `json:"phone"`
+	Name      string    `json:"name"`
+	Email     string    `json:"email"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type Question struct {
-	ID             int64  `json:"id"`
-	Question       string `json:"question"`
-	CompanyID      int64  `json:"company_id"`
-	Type           string `json:"type"`
-	ParentID       int64  `json:"parent_id"`
-	ChannelID      int64  `json:"channel_id"`
-	NextQuestionID int64  `json:"next_question_id"`
+	ID             int64     `json:"id"`
+	Question       string    `json:"question"`
+	CompanyID      int64     `json:"company_id"`
+	Type           string    `json:"type"`
+	ParentID       int64     `json:"parent_id"`
+	ChannelID      int64     `json:"channel_id"`
+	NextQuestionID int64     `json:"next_question_id"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
 }
 
 type Response struct {
-	ID             int64  `json:"id"`
-	QuestionID     int64  `json:"question_id"`
-	Response       string `json:"response"`
-	NextQuestionID int64  `json:"next_question_id"`
+	ID             int64     `json:"id"`
+	QuestionID     int64     `json:"question_id"`
+	Response       string    `json:"response"`
+	NextQuestionID int64     `json:"next_question_id"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
 }
 
 type Session struct {
-	ID         int64 `json:"id"`
-	UserID     int64 `json:"user_id"`
-	ChanellID  int64 `json:"chanell_id"`
-	QuestionID int64 `json:"question_id"`
-	ResponseID int64 `json:"response_id"`
+	ID         int64     `json:"id"`
+	UserID     int64     `json:"user_id"`
+	ChanellID  int64     `json:"chanell_id"`
+	QuestionID int64     `json:"question_id"`
+	ResponseID int64     `json:"response_id"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
 }
 
 type User struct {
-	ID           int64  `json:"id"`
-	Mobile       string `json:"mobile"`
-	PasswordHash string `json:"password_hash"`
-	Name         string `json:"name"`
-	CompanyID    int64  `json:"company_id"`
+	ID           int64     `json:"id"`
+	Mobile       string    `json:"mobile"`
+	PasswordHash string    `json:"password_hash"`
+	Name         string    `json:"name"`
+	CompanyID    int64     `json:"company_id"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 type UserResponse struct {
-	ID         int64 `json:"id"`
-	ResponseID int64 `json:"response_id"`
-	UserID     int64 `json:"user_id"`
-	OptionID   int64 `json:"option_id"`
-	QuestionID int64 `json:"question_id"`
+	ID         int64     `json:"id"`
+	ResponseID int64     `json:"response_id"`
+	UserID     int64     `json:"user_id"`
+	OptionID   int64     `json:"option_id"`
+	QuestionID int64     `json:"question_id"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
 }
