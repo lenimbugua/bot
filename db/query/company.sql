@@ -1,10 +1,10 @@
 -- name: CreateCompany :one
 INSERT INTO companies (
-    email,
-    mobile,
+    phone,
     name,
+    email
 ) VALUES (
-    $1, $2, $3, 
+    $1, $2, $3
 ) RETURNING *;
 
 -- name: GetCompany :one

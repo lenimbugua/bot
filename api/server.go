@@ -4,21 +4,21 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	db "github.com/lenimbugua/artworld/db/sqlc"
-	"github.com/lenimbugua/artworld/token"
-	"github.com/lenimbugua/artworld/util"
+	db "github.com/lenimbugua/bot/db/sqlc"
+	"github.com/lenimbugua/bot/token"
+	"github.com/lenimbugua/bot/util"
 )
 
-// server serves HTTP  requests for artworld
+// server serves HTTP  requests for bot
 type Server struct {
 	config     util.Config
-	dbStore    db.QueryStore
+	dbStore    db.Store
 	tokenMaker token.Maker
 	router     *gin.Engine
 }
 
 // Newserver creates a new HTTP server and sets up routing
-func NewServer(config util.Config, dbStore db.QueryStore) (*Server, error) {
+func NewServer(config util.Config, dbStore db.Store) (*Server, error) {
 	tokenMaker, err := token.NewPasetoMaker(config.TokenSymmetricKey)
 	if err != nil {
 		return nil, fmt.Errorf("Cannot Create token %w", err)

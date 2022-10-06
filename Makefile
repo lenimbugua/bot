@@ -28,6 +28,6 @@ server:
 	go run main.go
 
 mock:
-	mockgen -package mockdb -destination db/mock/store.go github.com/lenimbugua/bot/db/sqlc QueryStore
+	mockgen -package mockdb -destination db/mock/store.go github.com/lenimbugua/bot/db/sqlc Store
 
 .PHONY: postgres createdb dropdb initschema migrateup migratedown sqlc test server mock
