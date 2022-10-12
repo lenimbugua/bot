@@ -11,6 +11,7 @@ DROP TABLE IF EXISTS "user_responses";
 DROP TABLE IF EXISTS "sessions";
 DROP TABLE IF EXISTS "responses";
 DROP TABLE IF EXISTS "questions";
+DROP TABLE IF EXISTS "user_company";
 DROP TABLE IF EXISTS "users";
 DROP TABLE IF EXISTS "companies";
 DROP TABLE IF EXISTS "channels";

@@ -31,7 +31,7 @@ func main() {
 		port := os.Getenv("PORT")
 		serverAddress = ":" + port
 	} else {
-		serverAddress = config.ServerAddress
+		serverAddress = config.HTTPServerAddress
 	}
 	err = server.Start(serverAddress)
 	if err != nil {

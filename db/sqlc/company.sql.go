@@ -16,7 +16,7 @@ INSERT INTO companies (
     email
 ) VALUES (
     $1, $2, $3
-) RETURNING id, phone, name, email, created_at, updated_at
+) RETURNING id, email, phone, name, created_at, updated_at
 `
 
 type CreateCompanyParams struct {
@@ -30,9 +30,9 @@ func (q *Queries) CreateCompany(ctx context.Context, arg CreateCompanyParams) (C
 	var i Company
 	err := row.Scan(
 		&i.ID,
+		&i.Email,
 		&i.Phone,
 		&i.Name,
-		&i.Email,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -40,7 +40,7 @@ func (q *Queries) CreateCompany(ctx context.Context, arg CreateCompanyParams) (C
 }
 
 const getCompany = `-- name: GetCompany :one
-SELECT id, phone, name, email, created_at, updated_at FROM companies
+SELECT id, email, phone, name, created_at, updated_at FROM companies
 WHERE email = $1 LIMIT 1
 `
 
@@ -49,9 +49,9 @@ func (q *Queries) GetCompany(ctx context.Context, email string) (Company, error)
 	var i Company
 	err := row.Scan(
 		&i.ID,
+		&i.Email,
 		&i.Phone,
 		&i.Name,
-		&i.Email,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

@@ -23,7 +23,6 @@ func createRandomCompany(t *testing.T) Company {
 	require.Equal(t, arg.Email, company.Email)
 	require.Equal(t, arg.Name, company.Name)
 
-	require.NotZero(t, company.ID)
 	require.NotZero(t, company.CreatedAt)
 	require.NotZero(t, company.UpdatedAt)
 

@@ -5,20 +5,23 @@
 package db
 
 import (
-	"database/sql"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Channel struct {
-	ID   int32          `json:"id"`
-	Name sql.NullString `json:"name"`
+	ID        int32     `json:"id"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type Company struct {
 	ID        int64     `json:"id"`
+	Email     string    `json:"email"`
 	Phone     string    `json:"phone"`
 	Name      string    `json:"name"`
-	Email     string    `json:"email"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -45,30 +48,39 @@ type Response struct {
 }
 
 type Session struct {
-	ID         int64     `json:"id"`
-	UserID     int64     `json:"user_id"`
-	ChanellID  int64     `json:"chanell_id"`
-	QuestionID int64     `json:"question_id"`
-	ResponseID int64     `json:"response_id"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
+	ID           uuid.UUID `json:"id"`
+	UserID       int64     `json:"user_id"`
+	RefreshToken string    `json:"refresh_token"`
+	UserAgent    string    `json:"user_agent"`
+	ClientIp     string    `json:"client_ip"`
+	IsBlocked    bool      `json:"is_blocked"`
+	ChannelID    int64     `json:"channel_id"`
+	QuestionID   int64     `json:"question_id"`
+	ResponseID   int64     `json:"response_id"`
+	ExpiresAt    time.Time `json:"expires_at"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 type User struct {
-	ID           int64     `json:"id"`
-	Mobile       string    `json:"mobile"`
-	PasswordHash string    `json:"password_hash"`
-	Name         string    `json:"name"`
-	CompanyID    int64     `json:"company_id"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	ID                int64     `json:"id"`
+	Phone             string    `json:"phone"`
+	PasswordHash      string    `json:"password_hash"`
+	PasswordChangedAt time.Time `json:"password_changed_at"`
+	Name              string    `json:"name"`
+	CreatedAt         time.Time `json:"created_at"`
+	UpdatedAt         time.Time `json:"updated_at"`
+}
+
+type UserCompany struct {
+	UserID    int64 `json:"user_id"`
+	CompanyID int64 `json:"company_id"`
 }
 
 type UserResponse struct {
 	ID         int64     `json:"id"`
 	ResponseID int64     `json:"response_id"`
 	UserID     int64     `json:"user_id"`
-	OptionID   int64     `json:"option_id"`
 	QuestionID int64     `json:"question_id"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
