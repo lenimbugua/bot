@@ -11,14 +11,23 @@ import (
 )
 
 type Querier interface {
+	CreateBot(ctx context.Context, arg CreateBotParams) (Bot, error)
 	CreateChannel(ctx context.Context, name string) (Channel, error)
 	CreateCompany(ctx context.Context, arg CreateCompanyParams) (Company, error)
+	CreateQuestion(ctx context.Context, arg CreateQuestionParams) (Question, error)
 	CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	DeleteCompany(ctx context.Context, id int64) error
+	GetBot(ctx context.Context, id int64) (Bot, error)
 	GetChannel(ctx context.Context, name string) (Channel, error)
-	GetCompany(ctx context.Context, email string) (Company, error)
+	GetCompanyByEmail(ctx context.Context, email string) (Company, error)
+	GetCompanyByID(ctx context.Context, id int64) (Company, error)
 	GetSession(ctx context.Context, id uuid.UUID) (Session, error)
 	GetUser(ctx context.Context, phone string) (User, error)
+	ListAllBots(ctx context.Context, arg ListAllBotsParams) ([]Bot, error)
+	ListCompanies(ctx context.Context, arg ListCompaniesParams) ([]Company, error)
+	ListCompanyBots(ctx context.Context, arg ListCompanyBotsParams) ([]Bot, error)
+	UpdateCompany(ctx context.Context, arg UpdateCompanyParams) (Company, error)
 }
 
 var _ Querier = (*Queries)(nil)

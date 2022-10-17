@@ -40,6 +40,19 @@ func (server *Server) setupRouter() {
 	authRoutes := router.Group("/").Use(authMiddleware(server.tokenMaker))
 	authRoutes.POST("/channels", server.createChannel)
 
+	authRoutes.POST("/companies", server.createCompany)
+
+	//getCompanyByEmail uses query string
+	authRoutes.GET("/companies", server.getCompanyByEmail)
+	//getCompanyByID uses query uri
+	authRoutes.GET("/companies/:id", server.getCompanyByID)
+
+	authRoutes.GET("/list/companies", server.listCompanies)
+
+	authRoutes.PUT("/companies/:id", server.updateCompany)
+
+	authRoutes.DELETE("/companies/:id", server.deleteCompany)
+
 	server.router = router
 
 }
@@ -52,4 +65,8 @@ func (server *Server) Start(address string) error {
 // create a basic gin error
 func errorResponse(err error) gin.H {
 	return gin.H{"error": err.Error()}
+}
+
+func descriptiveError(err string) gin.H {
+	return gin.H{"error": err}
 }

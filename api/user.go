@@ -2,6 +2,7 @@ package api
 
 import (
 	"database/sql"
+	"log"
 	"net/http"
 	"time"
 
@@ -13,26 +14,29 @@ import (
 )
 
 type createUserRequest struct {
-	Name     string `json:"name" binding:"required"`
-	Password string `json:"password" binding:"required,min=6"`
-	Phone    string `json:"phone" binding:"required,e164"`
+	Name      string `json:"name" binding:"required"`
+	Password  string `json:"password" binding:"required,min=6"`
+	Phone     string `json:"phone" binding:"required,e164"`
+	CompanyID int64  `json:"company_id" binding:"required,min=1"`
 }
 
 type userResponse struct {
-	Name              string    `json:"name"`
-	Phone             string    `json:"phone"`
-	PasswordChangedAt time.Time `json:"password_changed_at"`
-	CreatedAt         time.Time `json:"created_at"`
-	UpdatedAt         time.Time `json:"updated_at"`
+	Name              string     `json:"name"`
+	Phone             string     `json:"phone"`
+	PasswordChangedAt time.Time  `json:"password_changed_at"`
+	CreatedAt         time.Time  `json:"created_at"`
+	UpdatedAt         time.Time  `json:"updated_at"`
+	Company           db.Company `json:"company"`
 }
 
-func newUserResponse(user db.User) userResponse {
+func newUserResponse(user db.User, company db.Company) userResponse {
 	return userResponse{
 		Name:              user.Name,
 		Phone:             user.Phone,
 		PasswordChangedAt: user.PasswordChangedAt,
 		CreatedAt:         user.CreatedAt,
 		UpdatedAt:         user.UpdatedAt,
+		Company:           company,
 	}
 }
 
@@ -40,6 +44,17 @@ func (server *Server) createUser(ctx *gin.Context) {
 	var req createUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	company, err := server.dbStore.GetCompanyByID(ctx, req.CompanyID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, descriptiveError("Company not found"))
+			return
+		}
+
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
@@ -53,14 +68,16 @@ func (server *Server) createUser(ctx *gin.Context) {
 		Name:         req.Name,
 		PasswordHash: hashedPassword,
 		Phone:        req.Phone,
+		CompanyID:    company.ID,
 	}
 
 	user, err := server.dbStore.CreateUser(ctx, arg)
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok {
+			log.Print("pg", pqErr.Constraint)
 			switch pqErr.Code.Name() {
 			case "unique_violation":
-				ctx.JSON(http.StatusForbidden, errorResponse(err))
+				ctx.JSON(http.StatusForbidden, descriptiveError(pqErr.Detail))
 				return
 			}
 		}
@@ -68,7 +85,7 @@ func (server *Server) createUser(ctx *gin.Context) {
 		return
 	}
 
-	rsp := newUserResponse(user)
+	rsp := newUserResponse(user, company)
 	ctx.JSON(http.StatusOK, rsp)
 }
 
@@ -108,9 +125,10 @@ func (server *Server) loginUser(ctx *gin.Context) {
 		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
 		return
 	}
-
 	accessToken, accessPayload, err := server.tokenMaker.CreateToken(
 		user.Phone,
+		user.ID,
+		user.Name,
 		server.config.AccessTokenDuration,
 	)
 	if err != nil {
@@ -120,6 +138,8 @@ func (server *Server) loginUser(ctx *gin.Context) {
 
 	refreshToken, refreshPayload, err := server.tokenMaker.CreateToken(
 		user.Phone,
+		user.ID,
+		user.Name,
 		server.config.RefreshTokenDuration,
 	)
 	if err != nil {
@@ -129,14 +149,28 @@ func (server *Server) loginUser(ctx *gin.Context) {
 
 	session, err := server.dbStore.CreateSession(ctx, db.CreateSessionParams{
 		ID:           refreshPayload.ID,
-		UserID:     user.ID,
+		UserID:       user.ID,
 		RefreshToken: refreshToken,
 		UserAgent:    ctx.Request.UserAgent(),
 		ClientIp:     ctx.ClientIP(),
 		IsBlocked:    false,
+		ChannelID:    util.DefaultID,
+		QuestionID:   util.DefaultID,
+		ResponseID:   util.DefaultID,
 		ExpiresAt:    refreshPayload.ExpiredAt,
 	})
 	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	company, err := server.dbStore.GetCompanyByID(ctx, user.CompanyID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
@@ -147,7 +181,7 @@ func (server *Server) loginUser(ctx *gin.Context) {
 		AccessTokenExpiresAt:  accessPayload.ExpiredAt,
 		RefreshToken:          refreshToken,
 		RefreshTokenExpiresAt: refreshPayload.ExpiredAt,
-		User:                  newUserResponse(user),
+		User:                  newUserResponse(user, company),
 	}
 	ctx.JSON(http.StatusOK, rsp)
 }

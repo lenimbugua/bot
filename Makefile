@@ -12,11 +12,20 @@ dropdb:
 initschema: 
 	migrate create -ext sql -dir db/migration init_schema
 
+prepopulate: 
+	migrate create -ext sql -dir db/migration prepopulate_db
+
 migrateup:
 	migrate -path db/migration -database "$(DB_SOURCE)" -verbose up
 
 migratedown:
 	migrate -path db/migration -database "$(DB_SOURCE)" -verbose down
+
+migrateup1:
+	migrate -path db/migration -database "$(DB_SOURCE)" -verbose up 1
+
+migratedown1:
+	migrate -path db/migration -database "$(DB_SOURCE)" -verbose down 1
 
 sqlc:
 	sqlc generate
@@ -30,4 +39,4 @@ server:
 mock:
 	mockgen -package mockdb -destination db/mock/store.go github.com/lenimbugua/bot/db/sqlc Store
 
-.PHONY: postgres createdb dropdb initschema migrateup migratedown sqlc test server mock
+.PHONY: postgres createdb dropdb initschema migrateup prepopulate migratedown migrateup1 migratedown1 sqlc test server mock

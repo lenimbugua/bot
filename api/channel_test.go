@@ -54,7 +54,7 @@ func TestCreateChannelAPI(t *testing.T) {
 				"name": channel.Name,
 			},
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, time.Minute)
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -89,7 +89,7 @@ func TestCreateChannelAPI(t *testing.T) {
 				"name": channel.Name,
 			},
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, time.Minute)
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer,  user.Phone, user.ID, user.Name, time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().

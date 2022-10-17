@@ -1,141 +1,187 @@
 package api
 
-// import (
-// 	"net/http"
+import (
+	"database/sql"
+	"net/http"
+	"time"
 
-// 	"github.com/gin-gonic/gin"
-// 	db "github.com/lenimbugua/bot/db/sqlc"
-// )
+	"github.com/gin-gonic/gin"
+	db "github.com/lenimbugua/bot/db/sqlc"
+	"github.com/lib/pq"
+)
 
-// type createCompanyRequest struct {
-// 	Phone string `json:"mobile" binding:"required,e164"`
-// 	Email string `json:"email" binding:"required,email"`
-// 	Name  string `json:"description" binding:"required"`
-// }
+type createCompanyRequest struct {
+	Phone string `json:"phone" binding:"required,e164"`
+	Name  string `json:"name" binding:"required"`
+	Email string `json:"email" binding:"required,email"`
+}
 
-// func (server *Server) createCompany(ctx *gin.Context) {
-// 	var req createCompanyRequest
-// 	if err := ctx.ShouldBindJSON(&req); err != nil {
-// 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-// 		return
-// 	}
-// 	arg := db.CreateCompanyParams{
-// 		Phone: req.Phone,
-// 		Email: req.Email,
-// 		Name:  req.Name,
-// 	}
-// 	company, err := server.dbStore.CreateCompany(ctx, arg)
-// 	if err != nil {
-// 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-// 		return
-// 	}
-// 	ctx.JSON(http.StatusOK, company)
-// }
+func (server *Server) createCompany(ctx *gin.Context) {
+	var req createCompanyRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
 
-// // type getRoleRequest struct {
-// // 	ID int32 `uri:"id" binding:"required,min=1"`
-// // }
+	arg := db.CreateCompanyParams{
+		Phone: req.Phone,
+		Email: req.Email,
+		Name:  req.Name,
+	}
+	company, err := server.dbStore.CreateCompany(ctx, arg)
+	if err != nil {
+		if pqErr, ok := err.(*pq.Error); ok {
+			switch pqErr.Code.Name() {
+			case "foreign_key_violation", "unique_violation":
+				ctx.JSON(http.StatusForbidden, errorResponse(err))
+				return
+			}
+		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
 
-// // func (server *Server) getRole(ctx *gin.Context) {
-// // 	var req getRoleRequest
+	ctx.JSON(http.StatusOK, company)
+}
 
-// // 	if err := ctx.ShouldBindUri(&req); err != nil {
-// // 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-// // 		return
-// // 	}
+type getCompanyByEmailRequest struct {
+	Email string `form:"email" binding:"required,email"`
+}
 
-// // 	role, err := server.dbStore.GetRole(ctx, req.ID)
-// // 	if err != nil {
-// // 		if err == sql.ErrNoRows {
-// // 			ctx.JSON(http.StatusNotFound, errorResponse(err))
-// // 			return
-// // 		}
-// // 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-// // 		return
-// // 	}
-// // 	ctx.JSON(http.StatusOK, role)
-// // }
+func (server *Server) getCompanyByEmail(ctx *gin.Context) {
+	var req getCompanyByEmailRequest
 
-// // type listRolesRequest struct {
-// // 	PageID   int32 `form:"page_id" binding:"required,min=1"`
-// // 	PageSize int32 `form:"page_size" binding:"required,min=5,max=10"`
-// // }
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
 
-// // func (server *Server) listRoles(ctx *gin.Context) {
-// // 	var req listRolesRequest
-// // 	if err := ctx.ShouldBindQuery(&req); err != nil {
-// // 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-// // 		return
-// // 	}
+	company, err := server.dbStore.GetCompanyByEmail(ctx, req.Email)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	ctx.JSON(http.StatusOK, company)
+}
 
-// // 	arg := db.ListRolesParams{
-// // 		Limit:  req.PageSize,
-// // 		Offset: (req.PageID - 1) * req.PageSize,
-// // 	}
+type getCompanyByIDRequest struct {
+	ID int64 `uri:"id" binding:"required,min=1"`
+}
 
-// // 	roles, err := server.dbStore.ListRoles(ctx, arg)
-// // 	if err != nil {
-// // 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-// // 	}
-// // 	ctx.JSON(http.StatusOK, roles)
-// // }
+func (server *Server) getCompanyByID(ctx *gin.Context) {
+	var req getCompanyByIDRequest
 
-// // func (server *Server) updateRole(ctx *gin.Context) {
-// // 	var uri getRoleRequest
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
 
-// // 	var req createRoleRequest
+	company, err := server.dbStore.GetCompanyByID(ctx, req.ID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	ctx.JSON(http.StatusOK, company)
+}
 
-// // 	if err := ctx.ShouldBindUri(&uri); err != nil {
-// // 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-// // 		return
-// // 	}
+type listCompaniesRequest struct {
+	PageID   int32 `form:"page_id" binding:"required,min=1"`
+	PageSize int32 `form:"page_size" binding:"required,min=5,max=10"`
+}
 
-// // 	id := uri.ID
+func (server *Server) listCompanies(ctx *gin.Context) {
+	var req listCompaniesRequest
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
 
-// // 	if err := ctx.ShouldBindJSON(&req); err != nil {
-// // 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-// // 		return
-// // 	}
+	arg := db.ListCompaniesParams{
+		Limit:  req.PageSize,
+		Offset: (req.PageID - 1) * req.PageSize,
+	}
 
-// // 	arg := db.UpdateRoleParams{
-// // 		Title:       sql.NullString{String: req.Title, Valid: true},
-// // 		Slug:        sql.NullString{String: req.Slug, Valid: true},
-// // 		Description: sql.NullString{String: req.Description, Valid: true},
-// // 		Active:      sql.NullBool{Bool: req.Active, Valid: true},
-// // 		ID:          id,
-// // 	}
+	companies, err := server.dbStore.ListCompanies(ctx, arg)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+	}
+	ctx.JSON(http.StatusOK, companies)
+}
 
-// // 	role, err := server.dbStore.UpdateRole(ctx, arg)
+type updateCompanyUri struct {
+	ID int64 `uri:"id" binding:"required"`
+}
 
-// // 	if err != nil {
-// // 		if err == sql.ErrNoRows {
-// // 			ctx.JSON(http.StatusNotFound, errorResponse(err))
-// // 			return
-// // 		}
-// // 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-// // 		return
-// // 	}
-// // 	ctx.JSON(http.StatusOK, role)
-// // }
+type updateCompanyRequest struct {
+	Phone string `json:"phone" binding:"required,e164"`
+	Name  string `json:"name" binding:"required"`
+	Email string `json:"email" binding:"required,email"`
+}
 
-// // func (server *Server) deleteRole(ctx *gin.Context) {
-// // 	var req getRoleRequest
+func (server *Server) updateCompany(ctx *gin.Context) {
+	var uri updateCompanyUri
 
-// // 	if err := ctx.ShouldBindUri(&req); err != nil {
-// // 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-// // 		return
-// // 	}
+	var req updateCompanyRequest
 
-// // 	err := server.dbStore.DeleteRole(ctx, req.ID)
+	if err := ctx.ShouldBindUri(&uri); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
 
-// // 	if err != nil {
-// // 		if err == sql.ErrNoRows {
-// // 			ctx.JSON(http.StatusNotFound, errorResponse(err))
-// // 			return
-// // 		}
-// // 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-// // 		return
-// // 	}
-// // 	ctx.JSON(http.StatusOK, req.ID)
+	id := uri.ID
 
-// // }
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	arg := db.UpdateCompanyParams{
+		Name:      sql.NullString{String: req.Name, Valid: true},
+		Phone:     sql.NullString{String: req.Phone, Valid: true},
+		Email:     sql.NullString{String: req.Email, Valid: true},
+		UpdatedAt: sql.NullTime{Time: time.Now(), Valid: false},
+		ID:        id,
+	}
+
+	company, err := server.dbStore.UpdateCompany(ctx, arg)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	ctx.JSON(http.StatusOK, company)
+}
+
+func (server *Server) deleteCompany(ctx *gin.Context) {
+	var req getCompanyByIDRequest
+
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	err := server.dbStore.DeleteCompany(ctx, req.ID)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	ctx.JSON(http.StatusOK, req.ID)
+
+}

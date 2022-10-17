@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 )
 
 const createCompany = `-- name: CreateCompany :one
@@ -39,13 +40,123 @@ func (q *Queries) CreateCompany(ctx context.Context, arg CreateCompanyParams) (C
 	return i, err
 }
 
-const getCompany = `-- name: GetCompany :one
+const deleteCompany = `-- name: DeleteCompany :exec
+DELETE FROM companies
+WHERE id = $1
+`
+
+func (q *Queries) DeleteCompany(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteCompany, id)
+	return err
+}
+
+const getCompanyByEmail = `-- name: GetCompanyByEmail :one
 SELECT id, email, phone, name, created_at, updated_at FROM companies
 WHERE email = $1 LIMIT 1
 `
 
-func (q *Queries) GetCompany(ctx context.Context, email string) (Company, error) {
-	row := q.db.QueryRowContext(ctx, getCompany, email)
+func (q *Queries) GetCompanyByEmail(ctx context.Context, email string) (Company, error) {
+	row := q.db.QueryRowContext(ctx, getCompanyByEmail, email)
+	var i Company
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Phone,
+		&i.Name,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getCompanyByID = `-- name: GetCompanyByID :one
+SELECT id, email, phone, name, created_at, updated_at FROM companies
+WHERE id = $1 LIMIT 1
+`
+
+func (q *Queries) GetCompanyByID(ctx context.Context, id int64) (Company, error) {
+	row := q.db.QueryRowContext(ctx, getCompanyByID, id)
+	var i Company
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Phone,
+		&i.Name,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const listCompanies = `-- name: ListCompanies :many
+SELECT id, email, phone, name, created_at, updated_at FROM companies
+ORDER BY id
+LIMIT $1
+OFFSET $2
+`
+
+type ListCompaniesParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) ListCompanies(ctx context.Context, arg ListCompaniesParams) ([]Company, error) {
+	rows, err := q.db.QueryContext(ctx, listCompanies, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Company{}
+	for rows.Next() {
+		var i Company
+		if err := rows.Scan(
+			&i.ID,
+			&i.Email,
+			&i.Phone,
+			&i.Name,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateCompany = `-- name: UpdateCompany :one
+UPDATE companies
+SET
+ email = coalesce($1, email),
+ phone = coalesce($2, phone),
+ name = coalesce($3, name),
+ updated_at = coalesce($4, updated_at)
+WHERE id = $5 
+RETURNING id, email, phone, name, created_at, updated_at
+`
+
+type UpdateCompanyParams struct {
+	Email     sql.NullString `json:"email"`
+	Phone     sql.NullString `json:"phone"`
+	Name      sql.NullString `json:"name"`
+	UpdatedAt sql.NullTime   `json:"updated_at"`
+	ID        int64          `json:"id"`
+}
+
+func (q *Queries) UpdateCompany(ctx context.Context, arg UpdateCompanyParams) (Company, error) {
+	row := q.db.QueryRowContext(ctx, updateCompany,
+		arg.Email,
+		arg.Phone,
+		arg.Name,
+		arg.UpdatedAt,
+		arg.ID,
+	)
 	var i Company
 	err := row.Scan(
 		&i.ID,
