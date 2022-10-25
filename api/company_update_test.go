@@ -20,9 +20,8 @@ import (
 )
 
 func TestUpdateCompanyAPI(t *testing.T) {
-	user, _ := randomUser(t)
 	company := randomCompany()
-	updatedAt := time.Now()
+	user, _ := randomUser(t, company.ID)
 	testcases := []struct {
 		name          string
 		id            int64
@@ -35,21 +34,19 @@ func TestUpdateCompanyAPI(t *testing.T) {
 			name: "ok",
 			id:   company.ID,
 			body: gin.H{
-				"name":       company.Name,
-				"phone":      company.Phone,
-				"email":      company.Email,
-				"updated_at": updatedAt,
+				"name":  company.Name,
+				"phone": company.Phone,
+				"email": company.Email,
 			},
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, time.Minute)
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name,user.CompanyID, time.Minute)
 			},
 			buildStub: func(store *mockdb.MockStore) {
 				arg := db.UpdateCompanyParams{
-					Name:      sql.NullString{String: company.Name, Valid: true},
-					Email:     sql.NullString{String: company.Email, Valid: true},
-					Phone:     sql.NullString{String: company.Phone, Valid: true},
-					UpdatedAt: sql.NullTime{Time: updatedAt, Valid: false},
-					ID:        company.ID,
+					Name:  sql.NullString{String: company.Name, Valid: true},
+					Email: sql.NullString{String: company.Email, Valid: true},
+					Phone: sql.NullString{String: company.Phone, Valid: true},
+					ID:    company.ID,
 				}
 				store.EXPECT().
 					UpdateCompany(gomock.Any(), EqUpdateCompanyParams(arg)).
@@ -64,16 +61,36 @@ func TestUpdateCompanyAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "Bad Request",
+			name: "InvalidEmail",
 			id:   company.ID,
 			body: gin.H{
-				"name":       company.Name,
-				"phone":      company.Phone,
-				"email":      company.Email,
-				"updated_at": updatedAt,
+				"name":  company.Name,
+				"phone": company.Phone,
+				"email": "InvalidEmail",
 			},
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, time.Minute)
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name,user.CompanyID, time.Minute)
+			},
+			buildStub: func(store *mockdb.MockStore) {
+
+				store.EXPECT().
+					UpdateCompany(gomock.Any(), gomock.Any()).
+					Times(0)
+			},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusBadRequest, recorder.Code)
+			},
+		},
+		{
+			name: "InvalidPhone",
+			id:   company.ID,
+			body: gin.H{
+				"name":  company.Name,
+				"phone": "jhd",
+				"email": company.Email,
+			},
+			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, user.CompanyID, time.Minute)
 			},
 			buildStub: func(store *mockdb.MockStore) {
 
@@ -89,13 +106,12 @@ func TestUpdateCompanyAPI(t *testing.T) {
 			name: "Bad Request (Bad ID)",
 			id:   -1,
 			body: gin.H{
-				"name":       company.Name,
-				"phone":      company.Phone,
-				"email":      company.Email,
-				"updated_at": updatedAt,
+				"name":  company.Name,
+				"phone": company.Phone,
+				"email": company.Email,
 			},
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, time.Minute)
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, user.CompanyID, time.Minute)
 			},
 			buildStub: func(store *mockdb.MockStore) {
 
@@ -112,13 +128,12 @@ func TestUpdateCompanyAPI(t *testing.T) {
 			name: "Not Found",
 			id:   1,
 			body: gin.H{
-				"name":       company.Name,
-				"phone":      company.Phone,
-				"email":      company.Email,
-				"updated_at": updatedAt,
+				"name":  company.Name,
+				"phone": company.Phone,
+				"email": company.Email,
 			},
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, time.Minute)
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, user.CompanyID, time.Minute)
 			},
 			buildStub: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -132,14 +147,14 @@ func TestUpdateCompanyAPI(t *testing.T) {
 		},
 		{
 			name: "Internal server error",
+			id:   company.ID,
 			body: gin.H{
-				"name":       company.Name,
-				"phone":      company.Phone,
-				"email":      company.Email,
-				"updated_at": updatedAt,
+				"name":  company.Name,
+				"phone": company.Phone,
+				"email": company.Email,
 			},
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, time.Minute)
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, user.CompanyID, time.Minute)
 			},
 			buildStub: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -169,12 +184,12 @@ func TestUpdateCompanyAPI(t *testing.T) {
 			url := fmt.Sprintf("/companies/%d", testCase.id)
 
 			require := require.New(t)
-			argJSON, err := json.Marshal(testCase.body)
+			data, err := json.Marshal(testCase.body)
 			require.NoError(err)
 
-			bytesArg := bytes.NewBuffer(argJSON)
+			byteData := bytes.NewBuffer(data)
 
-			request, err := http.NewRequest(http.MethodPut, url, bytesArg)
+			request, err := http.NewRequest(http.MethodPut, url, byteData)
 			require.NoError(err)
 			testCase.setupAuth(t, request, server.tokenMaker)
 			server.router.ServeHTTP(recorder, request)
@@ -202,5 +217,3 @@ func (e eqUpdateCompanyParamMatcher) String() string {
 func EqUpdateCompanyParams(arg db.UpdateCompanyParams) gomock.Matcher {
 	return eqUpdateCompanyParamMatcher{arg}
 }
-
-

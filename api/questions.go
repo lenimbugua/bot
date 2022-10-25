@@ -1,7 +1,6 @@
 package api
 
 import (
-	"database/sql"
 	"net/http"
 	"time"
 
@@ -28,13 +27,11 @@ func (server *Server) createQuestion(ctx *gin.Context) {
 	}
 
 	arg := db.CreateQuestionParams{
-		Question: req.Question,
-		CompanyID: req.CompanyID,
-		Type:  req.Type,
-		ParentID: req.ParentID,
-		ChannelID: req.ChannelID,
+		Question:       req.Question,
+		Type:           req.Type,
+		ParentID:       req.ParentID,
 		NextQuestionID: req.NextQuestionID,
-		UpdatedAt: req.UpdatedAt,
+		UpdatedAt:      req.UpdatedAt,
 	}
 	company, err := server.dbStore.CreateQuestion(ctx, arg)
 	if err != nil {

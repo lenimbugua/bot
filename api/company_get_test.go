@@ -17,20 +17,20 @@ import (
 
 func TestGetCompanyByIDAPI(t *testing.T) {
 	company := randomCompany()
-	user, _ := randomUser(t)
+	user, _ := randomUser(t, company.ID)
 
 	testCases := []struct {
 		name          string
-		accountID     int64
+		companyID     int64
 		setupAuth     func(t *testing.T, request *http.Request, tokenMaker token.Maker)
 		buildStubs    func(store *mockdb.MockStore)
 		checkResponse func(t *testing.T, recoder *httptest.ResponseRecorder)
 	}{
 		{
 			name:      "OK",
-			accountID: company.ID,
+			companyID: company.ID,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, time.Minute)
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, user.CompanyID, time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -43,27 +43,24 @@ func TestGetCompanyByIDAPI(t *testing.T) {
 				requireBodyMatchCompany(t, recorder.Body, company)
 			},
 		},
-		// {
-		// 	name:      "UnauthorizedUser",
-		// 	query: Query{
-		// 		Email: company.Email,
-		// 	},
-		// 	setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-		// 		addAuthorization(t, request, tokenMaker, authorizationTypeBearer, "unauthorized_user", user.ID, user.Name, time.Minute)
-		// 	},
-		// 	buildStubs: func(store *mockdb.MockStore) {
-		// 		store.EXPECT().
-		// 			GetCompany(gomock.Any(), gomock.Eq(company.Email)).
-		// 			Times(1).
-		// 			Return(company, nil)
-		// 	},
-		// 	checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
-		// 		require.Equal(t, http.StatusUnauthorized, recorder.Code)
-		// 	},
-		// },
+		{
+			name:      "NoAuthorizationHeader",
+			companyID: company.ID,
+			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					GetCompanyByID(gomock.Any(), gomock.Eq(company.Email)).
+					Times(0).
+					Return(company, nil)
+			},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
+			},
+		},
 		{
 			name:      "NoAuthorization",
-			accountID: company.ID,
+			companyID: company.ID,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
 			},
 			buildStubs: func(store *mockdb.MockStore) {
@@ -77,9 +74,9 @@ func TestGetCompanyByIDAPI(t *testing.T) {
 		},
 		{
 			name:      "NotFound",
-			accountID: company.ID,
+			companyID: company.ID,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, time.Minute)
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, user.CompanyID, time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -93,9 +90,9 @@ func TestGetCompanyByIDAPI(t *testing.T) {
 		},
 		{
 			name:      "InternalError",
-			accountID: company.ID,
+			companyID: company.ID,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, time.Minute)
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, user.CompanyID, time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -109,9 +106,9 @@ func TestGetCompanyByIDAPI(t *testing.T) {
 		},
 		{
 			name:      "InvalidID",
-			accountID: -20,
+			companyID: -20,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, time.Minute)
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, user.CompanyID, time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -137,7 +134,7 @@ func TestGetCompanyByIDAPI(t *testing.T) {
 			server := newTestServer(t, store)
 			recorder := httptest.NewRecorder()
 
-			url := fmt.Sprintf("/companies/%d", tc.accountID)
+			url := fmt.Sprintf("/companies/%d", tc.companyID)
 			request, err := http.NewRequest(http.MethodGet, url, nil)
 			require.NoError(t, err)
 
@@ -151,10 +148,9 @@ func TestGetCompanyByIDAPI(t *testing.T) {
 	}
 }
 
-
 func TestGetCompanyByEmailAPI(t *testing.T) {
 	company := randomCompany()
-	user, _ := randomUser(t)
+	user, _ := randomUser(t, company.ID)
 
 	type Query struct {
 		Email string
@@ -173,7 +169,7 @@ func TestGetCompanyByEmailAPI(t *testing.T) {
 				Email: company.Email,
 			},
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, time.Minute)
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, user.CompanyID, time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -186,24 +182,24 @@ func TestGetCompanyByEmailAPI(t *testing.T) {
 				requireBodyMatchCompany(t, recorder.Body, company)
 			},
 		},
-		// {
-		// 	name:      "UnauthorizedUser",
-		// 	query: Query{
-		// 		Email: company.Email,
-		// 	},
-		// 	setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-		// 		addAuthorization(t, request, tokenMaker, authorizationTypeBearer, "unauthorized_user", user.ID, user.Name, time.Minute)
-		// 	},
-		// 	buildStubs: func(store *mockdb.MockStore) {
-		// 		store.EXPECT().
-		// 			GetCompany(gomock.Any(), gomock.Eq(company.Email)).
-		// 			Times(1).
-		// 			Return(company, nil)
-		// 	},
-		// 	checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
-		// 		require.Equal(t, http.StatusUnauthorized, recorder.Code)
-		// 	},
-		// },
+		{
+			name: "UnauthorizedUser",
+			query: Query{
+				Email: company.Email,
+			},
+			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, "unauthorized_user", user.ID, user.Name, user.CompanyID+1, time.Minute)
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					GetCompanyByEmail(gomock.Any(), gomock.Eq(company.Email)).
+					Times(1).
+					Return(company, nil)
+			},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
+			},
+		},
 		{
 			name: "NoAuthorization",
 			query: Query{
@@ -227,7 +223,7 @@ func TestGetCompanyByEmailAPI(t *testing.T) {
 				Email: company.Email,
 			},
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, time.Minute)
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, user.CompanyID, time.Minute)
 			},
 
 			buildStubs: func(store *mockdb.MockStore) {
@@ -246,7 +242,7 @@ func TestGetCompanyByEmailAPI(t *testing.T) {
 				Email: company.Email,
 			},
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, time.Minute)
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, user.CompanyID, time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -264,7 +260,7 @@ func TestGetCompanyByEmailAPI(t *testing.T) {
 				Email: "invalid email",
 			},
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, time.Minute)
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, user.CompanyID, time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().

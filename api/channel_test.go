@@ -39,7 +39,8 @@ func requireBodyMatchChannel(t *testing.T, body *bytes.Buffer, channel db.Channe
 
 func TestCreateChannelAPI(t *testing.T) {
 	channel := randomChannel()
-	user, _ := randomUser(t)
+	companyID := util.RandInt(1, 100)
+	user, _ := randomUser(t, companyID)
 
 	testCases := []struct {
 		name          string
@@ -54,7 +55,7 @@ func TestCreateChannelAPI(t *testing.T) {
 				"name": channel.Name,
 			},
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, time.Minute)
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, user.CompanyID, time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -89,7 +90,7 @@ func TestCreateChannelAPI(t *testing.T) {
 				"name": channel.Name,
 			},
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, authorizationTypeBearer,  user.Phone, user.ID, user.Name, time.Minute)
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, user.CompanyID, time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().

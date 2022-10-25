@@ -136,17 +136,16 @@ SET
  email = coalesce($1, email),
  phone = coalesce($2, phone),
  name = coalesce($3, name),
- updated_at = coalesce($4, updated_at)
-WHERE id = $5 
+ updated_at = now()
+WHERE id = $4 
 RETURNING id, email, phone, name, created_at, updated_at
 `
 
 type UpdateCompanyParams struct {
-	Email     sql.NullString `json:"email"`
-	Phone     sql.NullString `json:"phone"`
-	Name      sql.NullString `json:"name"`
-	UpdatedAt sql.NullTime   `json:"updated_at"`
-	ID        int64          `json:"id"`
+	Email sql.NullString `json:"email"`
+	Phone sql.NullString `json:"phone"`
+	Name  sql.NullString `json:"name"`
+	ID    int64          `json:"id"`
 }
 
 func (q *Queries) UpdateCompany(ctx context.Context, arg UpdateCompanyParams) (Company, error) {
@@ -154,7 +153,6 @@ func (q *Queries) UpdateCompany(ctx context.Context, arg UpdateCompanyParams) (C
 		arg.Email,
 		arg.Phone,
 		arg.Name,
-		arg.UpdatedAt,
 		arg.ID,
 	)
 	var i Company

@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
 	"github.com/lenimbugua/bot/util"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPasetoMaker(t *testing.T) {
@@ -14,12 +14,13 @@ func TestPasetoMaker(t *testing.T) {
 
 	phone := util.RandomPhoneNumber()
 	userID := util.RandInt(1, 1000)
+	companyID := util.RandInt(1, 1000)
 	name := util.RandomString(6)
 	duration := time.Minute
 
 	issuedAt := time.Now()
 	expiredAt := issuedAt.Add(duration)
-	token, payload, err := maker.CreateToken(phone, userID, name,duration)
+	token, payload, err := maker.CreateToken(phone, userID, name, companyID, duration)
 
 	require.NoError(t, err)
 	require.NotEmpty(t, token)
@@ -43,8 +44,9 @@ func TestExpiredPasetoToken(t *testing.T) {
 
 	phone := util.RandomPhoneNumber()
 	userID := util.RandInt(1, 1000)
+	companyID := util.RandInt(1, 1000)
 	name := util.RandomString(6)
-	token, payload, err := maker.CreateToken(phone, userID, name, -time.Minute)
+	token, payload, err := maker.CreateToken(phone, userID, name, companyID, -time.Minute)
 	require.NoError(t, err)
 	require.NotEmpty(t, token)
 	require.NotEmpty(t, payload)

@@ -2,11 +2,12 @@ package api
 
 import (
 	"database/sql"
+	"errors"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	db "github.com/lenimbugua/bot/db/sqlc"
+	"github.com/lenimbugua/bot/token"
 	"github.com/lib/pq"
 )
 
@@ -65,6 +66,14 @@ func (server *Server) getCompanyByEmail(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
+
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+
+	if company.ID != authPayload.CompanyID {
+		err := errors.New("No access rights for that company")
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
 	ctx.JSON(http.StatusOK, company)
 }
 
@@ -116,8 +125,8 @@ func (server *Server) listCompanies(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, companies)
 }
 
-type updateCompanyUri struct {
-	ID int64 `uri:"id" binding:"required"`
+type updateCompanyURI struct {
+	ID int64 `uri:"id" binding:"required,min=1"`
 }
 
 type updateCompanyRequest struct {
@@ -127,7 +136,7 @@ type updateCompanyRequest struct {
 }
 
 func (server *Server) updateCompany(ctx *gin.Context) {
-	var uri updateCompanyUri
+	var uri updateCompanyURI
 
 	var req updateCompanyRequest
 
@@ -136,19 +145,16 @@ func (server *Server) updateCompany(ctx *gin.Context) {
 		return
 	}
 
-	id := uri.ID
-
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
 	arg := db.UpdateCompanyParams{
-		Name:      sql.NullString{String: req.Name, Valid: true},
-		Phone:     sql.NullString{String: req.Phone, Valid: true},
-		Email:     sql.NullString{String: req.Email, Valid: true},
-		UpdatedAt: sql.NullTime{Time: time.Now(), Valid: false},
-		ID:        id,
+		Name:  sql.NullString{String: req.Name, Valid: true},
+		Phone: sql.NullString{String: req.Phone, Valid: true},
+		Email: sql.NullString{String: req.Email, Valid: true},
+		ID:    uri.ID,
 	}
 
 	company, err := server.dbStore.UpdateCompany(ctx, arg)

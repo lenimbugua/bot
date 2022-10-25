@@ -49,8 +49,8 @@ func EqCreateUserParams(arg db.CreateUserParams, password string) gomock.Matcher
 }
 
 func TestCreateUserAPI(t *testing.T) {
-	user, password := randomUser(t)
-
+	company := randomCompany()
+	user, password := randomUser(t, company.ID)
 	testCases := []struct {
 		name          string
 		body          gin.H
@@ -60,15 +60,19 @@ func TestCreateUserAPI(t *testing.T) {
 		{
 			name: "OK",
 			body: gin.H{
-				"password": password,
-				"name":     user.Name,
-				"phone":    user.Phone,
+				"password":   password,
+				"name":       user.Name,
+				"phone":      user.Phone,
+				"company_id": company.ID,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				arg := db.CreateUserParams{
-					Name:  user.Name,
-					Phone: user.Phone,
+					Name:         user.Name,
+					Phone:        user.Phone,
+					PasswordHash: password,
+					CompanyID:    company.ID,
 				}
+				store.EXPECT().GetCompanyByID(gomock.Any(), gomock.Eq(company.ID)).Times(1).Return(company, nil)
 				store.EXPECT().
 					CreateUser(gomock.Any(), EqCreateUserParams(arg, password)).
 					Times(1).
@@ -80,13 +84,55 @@ func TestCreateUserAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "InternalError",
+			name: "CompanyNotFound",
 			body: gin.H{
-				"password": password,
-				"name":     user.Name,
-				"phone":    user.Phone,
+				"password":   password,
+				"name":       user.Name,
+				"phone":      user.Phone,
+				"company_id": company.ID,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetCompanyByID(gomock.Any(), gomock.Any()).Times(1).Return(db.Company{}, sql.ErrNoRows)
+				store.EXPECT().
+					CreateUser(gomock.Any(), gomock.Any()).
+					Times(0)
+
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusNotFound, recorder.Code)
+			},
+		},
+		{
+			name: "GetCompanyInternalError",
+			body: gin.H{
+				"password":   password,
+				"name":       user.Name,
+				"phone":      user.Phone,
+				"company_id": company.ID,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetCompanyByID(gomock.Any(), gomock.Any()).Times(1).Return(db.Company{}, sql.ErrConnDone)
+				store.EXPECT().
+					CreateUser(gomock.Any(), gomock.Any()).
+					Times(0)
+
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+
+		
+		{
+			name: "InternalError",
+			body: gin.H{
+				"password":   password,
+				"name":       user.Name,
+				"phone":      user.Phone,
+				"company_id": company.ID,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetCompanyByID(gomock.Any(), gomock.Eq(company.ID)).Times(1).Return(company, nil)
 				store.EXPECT().
 					CreateUser(gomock.Any(), gomock.Any()).
 					Times(1).
@@ -99,11 +145,13 @@ func TestCreateUserAPI(t *testing.T) {
 		{
 			name: "DuplicatePhone",
 			body: gin.H{
-				"password": password,
-				"name":     user.Name,
-				"phone":    user.Phone,
+				"password":   password,
+				"name":       user.Name,
+				"phone":      user.Phone,
+				"company_id": company.ID,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().GetCompanyByID(gomock.Any(), gomock.Eq(company.ID)).Times(1).Return(company, nil)
 				store.EXPECT().
 					CreateUser(gomock.Any(), gomock.Any()).
 					Times(1).
@@ -116,9 +164,10 @@ func TestCreateUserAPI(t *testing.T) {
 		{
 			name: "InvalidPhone",
 			body: gin.H{
-				"password": password,
-				"name":     user.Name,
-				"phone":    "5%uyr6464",
+				"password":   password,
+				"name":       user.Name,
+				"phone":      "5%uyr6464",
+				"company_id": company.ID,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -133,9 +182,10 @@ func TestCreateUserAPI(t *testing.T) {
 		{
 			name: "TooShortPassword",
 			body: gin.H{
-				"password": "123",
-				"name":     user.Name,
-				"phone":    user.Phone,
+				"password":   "123",
+				"name":       user.Name,
+				"phone":      user.Phone,
+				"company_id": company.ID,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -176,7 +226,8 @@ func TestCreateUserAPI(t *testing.T) {
 }
 
 func TestLoginUserAPI(t *testing.T) {
-	user, password := randomUser(t)
+	company := randomCompany()
+	user, password := randomUser(t, company.ID)
 
 	testCases := []struct {
 		name          string
@@ -198,6 +249,7 @@ func TestLoginUserAPI(t *testing.T) {
 				store.EXPECT().
 					CreateSession(gomock.Any(), gomock.Any()).
 					Times(1)
+				store.EXPECT().GetCompanyByID(gomock.Any(), gomock.Eq(company.ID)).Times(1).Return(company, nil)
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusOK, recorder.Code)
@@ -266,6 +318,67 @@ func TestLoginUserAPI(t *testing.T) {
 				require.Equal(t, http.StatusBadRequest, recorder.Code)
 			},
 		},
+		{
+			name: "CreateSessionInternalError",
+			body: gin.H{
+				"password": password,
+				"phone":    user.Phone,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					GetUser(gomock.Any(), gomock.Eq(user.Phone)).
+					Times(1).
+					Return(user, nil)
+				store.EXPECT().
+					CreateSession(gomock.Any(), gomock.Any()).
+					Times(1).Return(db.Session{}, sql.ErrConnDone)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+		{
+			name: "GetCompanyInternalError",
+			body: gin.H{
+				"password": password,
+				"phone":    user.Phone,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					GetUser(gomock.Any(), gomock.Eq(user.Phone)).
+					Times(1).
+					Return(user, nil)
+				store.EXPECT().
+					CreateSession(gomock.Any(), gomock.Any()).
+					Times(1)
+				store.EXPECT().GetCompanyByID(gomock.Any(), gomock.Any()).Times(1).Return(db.Company{}, sql.ErrConnDone)
+
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+		{
+			name: "CompanyNotFound",
+			body: gin.H{
+				"password": password,
+				"phone":    user.Phone,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					GetUser(gomock.Any(), gomock.Eq(user.Phone)).
+					Times(1).
+					Return(user, nil)
+				store.EXPECT().
+					CreateSession(gomock.Any(), gomock.Any()).
+					Times(1)
+				store.EXPECT().GetCompanyByID(gomock.Any(), gomock.Any()).Times(1).Return(db.Company{}, sql.ErrNoRows)
+
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusNotFound, recorder.Code)
+			},
+		},
 	}
 
 	for i := range testCases {
@@ -295,7 +408,7 @@ func TestLoginUserAPI(t *testing.T) {
 	}
 }
 
-func randomUser(t *testing.T) (user db.User, password string) {
+func randomUser(t *testing.T, companyID int64) (user db.User, password string) {
 	password = util.RandomString(6)
 	hashedPassword, err := util.HashPassword(password)
 	require.NoError(t, err)
@@ -304,6 +417,7 @@ func randomUser(t *testing.T) (user db.User, password string) {
 		Name:         util.RandomString(6),
 		PasswordHash: hashedPassword,
 		Phone:        util.RandomPhoneNumber(),
+		CompanyID:    companyID,
 	}
 	return
 }

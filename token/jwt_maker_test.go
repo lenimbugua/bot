@@ -16,13 +16,14 @@ func TestJWTMaker(t *testing.T) {
 
 	phone := util.RandomPhoneNumber()
 	userID := util.RandInt(1, 1000)
+	companyID := util.RandInt(1, 1000)
 	name := util.RandomString(6)
 	duration := time.Minute
 
 	issuedAt := time.Now()
 	expiredAt := issuedAt.Add(duration)
 
-	token, payload, err := maker.CreateToken(phone, userID, name, duration)
+	token, payload, err := maker.CreateToken(phone, userID, name, companyID, duration)
 	require.NoError(err)
 	require.NotEmpty(token)
 	require.NotEmpty(payload)
@@ -46,9 +47,10 @@ func TestExpiredJWTToken(t *testing.T) {
 
 	phone := util.RandomPhoneNumber()
 	userID := util.RandInt(1, 1000)
+	companyID := util.RandInt(1, 1000)
 	name := util.RandomString(6)
 
-	token, payload, err := maker.CreateToken(phone, userID, name, -time.Minute)
+	token, payload, err := maker.CreateToken(phone, userID, name, companyID, -time.Minute)
 	require.NoError(err)
 	require.NotEmpty(token)
 	require.NotEmpty(payload)
@@ -62,8 +64,9 @@ func TestExpiredJWTToken(t *testing.T) {
 func TestInvalidJWTTokenAlgNone(t *testing.T) {
 	phone := util.RandomPhoneNumber()
 	userID := util.RandInt(1, 1000)
+	companyID := util.RandInt(1, 1000)
 	name := util.RandomString(6)
-	payload, err := NewPayload(phone, userID, name, time.Minute)
+	payload, err := NewPayload(phone, userID, name, companyID, time.Minute)
 	require := require.New(t)
 	require.NoError(err)
 

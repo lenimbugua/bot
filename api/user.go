@@ -74,7 +74,7 @@ func (server *Server) createUser(ctx *gin.Context) {
 	user, err := server.dbStore.CreateUser(ctx, arg)
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok {
-			log.Print("pg", pqErr.Constraint)
+			log.Print("pq", pqErr.Constraint)
 			switch pqErr.Code.Name() {
 			case "unique_violation":
 				ctx.JSON(http.StatusForbidden, descriptiveError(pqErr.Detail))
@@ -129,6 +129,7 @@ func (server *Server) loginUser(ctx *gin.Context) {
 		user.Phone,
 		user.ID,
 		user.Name,
+		user.CompanyID,
 		server.config.AccessTokenDuration,
 	)
 	if err != nil {
@@ -140,6 +141,7 @@ func (server *Server) loginUser(ctx *gin.Context) {
 		user.Phone,
 		user.ID,
 		user.Name,
+		user.CompanyID,
 		server.config.RefreshTokenDuration,
 	)
 	if err != nil {

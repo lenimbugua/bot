@@ -22,7 +22,7 @@ SET
  email = coalesce(sqlc.narg('email'), email),
  phone = coalesce(sqlc.narg('phone'), phone),
  name = coalesce(sqlc.narg('name'), name),
- updated_at = coalesce(sqlc.narg('updated_at'), updated_at)
+ updated_at = now()
 WHERE id = sqlc.arg('id') 
 RETURNING *;
 

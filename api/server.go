@@ -53,6 +53,12 @@ func (server *Server) setupRouter() {
 
 	authRoutes.DELETE("/companies/:id", server.deleteCompany)
 
+	authRoutes.POST("/bots", server.createBot)
+	authRoutes.PUT("/bots/:id", server.updateBot)
+	authRoutes.DELETE("/bots/:id", server.deleteBot)
+	authRoutes.GET("/list/bots", server.listBots)
+	authRoutes.GET("/list/companybots", server.listCompanyBots)
+
 	server.router = router
 
 }

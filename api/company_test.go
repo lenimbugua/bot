@@ -55,7 +55,7 @@ func requireBodyMatchListCompanies(t *testing.T, body *bytes.Buffer, companies [
 
 func TestCreateCompanyAPI(t *testing.T) {
 	company := randomCompany()
-	user, _ := randomUser(t)
+	user, _ := randomUser(t, company.ID)
 
 	testCases := []struct {
 		name          string
@@ -72,7 +72,7 @@ func TestCreateCompanyAPI(t *testing.T) {
 				"email": company.Email,
 			},
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, time.Minute)
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, user.CompanyID, time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				arg := db.CreateCompanyParams{
@@ -80,10 +80,12 @@ func TestCreateCompanyAPI(t *testing.T) {
 					Name:  company.Name,
 					Email: company.Email,
 				}
-				store.EXPECT().CreateCompany(gomock.Any(), gomock.Eq(arg)).Times(1)
+				store.EXPECT().CreateCompany(gomock.Any(), gomock.Eq(arg)).Times(1).Return(company, nil)
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusOK, recorder.Code)
+				requireBodyMatchCompany(t, recorder.Body, company)
+
 			},
 		},
 		{
@@ -112,7 +114,7 @@ func TestCreateCompanyAPI(t *testing.T) {
 				"Phone": company.Phone,
 			},
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, time.Minute)
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, user.CompanyID, time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -132,7 +134,7 @@ func TestCreateCompanyAPI(t *testing.T) {
 				"Phone": company.Phone,
 			},
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, time.Minute)
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, user.CompanyID, time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -151,7 +153,7 @@ func TestCreateCompanyAPI(t *testing.T) {
 				"Phone": "invalid",
 			},
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, time.Minute)
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, user.CompanyID, time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -193,7 +195,7 @@ func TestCreateCompanyAPI(t *testing.T) {
 }
 
 func TestListCompaniesAPI(t *testing.T) {
-	user, _ := randomUser(t)
+	user, _ := randomUser(t, util.RandInt(1, 100))
 	n := 5
 	companies := make([]db.Company, n)
 	for i := 0; i < n; i++ {
@@ -218,7 +220,7 @@ func TestListCompaniesAPI(t *testing.T) {
 				pageSize: n,
 			},
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, time.Minute)
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, user.CompanyID, time.Minute)
 			},
 			buildStub: func(store *mockdb.MockStore) {
 				arg := db.ListCompaniesParams{
@@ -242,7 +244,7 @@ func TestListCompaniesAPI(t *testing.T) {
 				pageSize: n,
 			},
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, time.Minute)
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, user.CompanyID, time.Minute)
 			},
 			buildStub: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -261,7 +263,7 @@ func TestListCompaniesAPI(t *testing.T) {
 				pageSize: 1000,
 			},
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, time.Minute)
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, user.CompanyID, time.Minute)
 			},
 			buildStub: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -279,7 +281,7 @@ func TestListCompaniesAPI(t *testing.T) {
 				pageSize: n,
 			},
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
-				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, time.Minute)
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, user.CompanyID, time.Minute)
 			},
 			buildStub: func(store *mockdb.MockStore) {
 				store.EXPECT().

@@ -84,7 +84,6 @@ func TestUpdateCompanyAllFields(t *testing.T) {
 		Name:      sql.NullString{String: name, Valid: true},
 		Email:     sql.NullString{String: email, Valid: true},
 		Phone:     sql.NullString{String: phone, Valid: true},
-		UpdatedAt: sql.NullTime{Time: updatedAt, Valid: true},
 		ID:        company.ID,
 	}
 	updatedCompany, err := testQueries.UpdateCompany(context.Background(), arg)
@@ -109,7 +108,6 @@ func TestUpdateCompanyOnlyName(t *testing.T) {
 	name := util.RandomString(6)
 	arg := UpdateCompanyParams{
 		Name:      sql.NullString{String: name, Valid: true},
-		UpdatedAt: sql.NullTime{Time: time.Now(), Valid: true},
 		ID:        company.ID,
 	}
 	updatedCompany, err := testQueries.UpdateCompany(context.Background(), arg)
@@ -131,7 +129,6 @@ func TestUpdateCompanyOnlyEmail(t *testing.T) {
 	email := util.RandomEmail()
 	arg := UpdateCompanyParams{
 		Email:     sql.NullString{String: email, Valid: true},
-		UpdatedAt: sql.NullTime{Time: time.Now(), Valid: true},
 		ID:        company.ID,
 	}
 	updatedCompany, err := testQueries.UpdateCompany(context.Background(), arg)
@@ -153,7 +150,6 @@ func TestUpdateCompanyOnlyPhone(t *testing.T) {
 	phone := util.RandomPhoneNumber()
 	arg := UpdateCompanyParams{
 		Phone:     sql.NullString{String: phone, Valid: true},
-		UpdatedAt: sql.NullTime{Time: time.Now(), Valid: true},
 		ID:        company.ID,
 	}
 	updatedCompany, err := testQueries.UpdateCompany(context.Background(), arg)
