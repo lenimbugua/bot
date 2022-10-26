@@ -13,10 +13,9 @@ type createQuestionRequest struct {
 	Question       string    `json:"question" binding:"required"`
 	CompanyID      int64     `json:"company_id" binding:"required",min=1`
 	Type           string    `json:"type" binding:"required"`
-	ParentID       int64     `json:"parent_id" binding:"required"`
-	ChannelID      int64     `json:"channel_id" binding:"required",min=1`
-	NextQuestionID int64     `json:"next_question_id" binding:"required"`
-	UpdatedAt      time.Time `json:"updated_at"`
+	ParentID       int64     `json:"parent_id" binding:"min=1"`
+	BotID          int64     `json:"bot_id" binding:"required",min=1`
+	NextQuestionID int64     `json:"next_question_id" binding:"min=1"`
 }
 
 func (server *Server) createQuestion(ctx *gin.Context) {
@@ -30,8 +29,8 @@ func (server *Server) createQuestion(ctx *gin.Context) {
 		Question:       req.Question,
 		Type:           req.Type,
 		ParentID:       req.ParentID,
+		BotID:       req.BotID,
 		NextQuestionID: req.NextQuestionID,
-		UpdatedAt:      req.UpdatedAt,
 	}
 	company, err := server.dbStore.CreateQuestion(ctx, arg)
 	if err != nil {

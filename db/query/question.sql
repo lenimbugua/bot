@@ -4,8 +4,7 @@ INSERT INTO questions (
     type, 
     parent_id, 
     bot_id, 
-    next_question_id, 
-    updated_at 
+    next_question_id
 ) VALUES (
-    $1,$2,$3,$4,$5,$6
+    $1,$2,$3,$4,$5
 ) RETURNING *;

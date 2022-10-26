@@ -7,7 +7,6 @@ package db
 
 import (
 	"context"
-	"time"
 )
 
 const createQuestion = `-- name: CreateQuestion :one
@@ -16,20 +15,18 @@ INSERT INTO questions (
     type, 
     parent_id, 
     bot_id, 
-    next_question_id, 
-    updated_at 
+    next_question_id
 ) VALUES (
-    $1,$2,$3,$4,$5,$6
+    $1,$2,$3,$4,$5
 ) RETURNING id, question, bot_id, type, parent_id, next_question_id, created_at, updated_at
 `
 
 type CreateQuestionParams struct {
-	Question       string    `json:"question"`
-	Type           string    `json:"type"`
-	ParentID       int64     `json:"parent_id"`
-	BotID          int64     `json:"bot_id"`
-	NextQuestionID int64     `json:"next_question_id"`
-	UpdatedAt      time.Time `json:"updated_at"`
+	Question       string `json:"question"`
+	Type           string `json:"type"`
+	ParentID       int64  `json:"parent_id"`
+	BotID          int64  `json:"bot_id"`
+	NextQuestionID int64  `json:"next_question_id"`
 }
 
 func (q *Queries) CreateQuestion(ctx context.Context, arg CreateQuestionParams) (Question, error) {
@@ -39,7 +36,6 @@ func (q *Queries) CreateQuestion(ctx context.Context, arg CreateQuestionParams) 
 		arg.ParentID,
 		arg.BotID,
 		arg.NextQuestionID,
-		arg.UpdatedAt,
 	)
 	var i Question
 	err := row.Scan(

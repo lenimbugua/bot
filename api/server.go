@@ -41,6 +41,7 @@ func (server *Server) setupRouter() {
 	authRoutes.POST("/channels", server.createChannel)
 	authRoutes.GET("/channels/:name", server.getChannel)
 	authRoutes.GET("/list/channels", server.listChannels)
+	authRoutes.PUT("/channels/:id", server.updateChannel)
 	authRoutes.DELETE("/channels/:id", server.deleteChannel)
 
 	authRoutes.POST("/companies", server.createCompany)

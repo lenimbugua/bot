@@ -113,3 +113,43 @@ func (server *Server) deleteChannel(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, nil)
 
 }
+
+type updateChannelRequestParams struct {
+	Name string `json:"name" binding:"required"`
+}
+type updateChannelURI struct {
+	ID int32 `uri:"id" binding:"required,min=1"`
+}
+
+func (server *Server) updateChannel(ctx *gin.Context) {
+	var uri updateChannelURI
+
+	var req updateChannelRequestParams
+
+	if err := ctx.ShouldBindUri(&uri); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	arg := db.UpdateChannelParams{
+		Name: sql.NullString{String: req.Name, Valid: true},
+		ID:   uri.ID,
+	}
+
+	channel, err := server.dbStore.UpdateChannel(ctx, arg)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	ctx.JSON(http.StatusOK, channel)
+}

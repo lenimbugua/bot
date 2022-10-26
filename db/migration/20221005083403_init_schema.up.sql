@@ -38,8 +38,8 @@ CREATE TABLE "questions" (
   "question" text NOT NULL,
   "bot_id" bigint NOT NULL,
   "type" varchar NOT NULL,
-  "parent_id" bigint NOT NULL,
-  "next_question_id" bigint NOT NULL,
+  "parent_id" bigint NOT NULL DEFAULT 0,
+  "next_question_id" bigint NOT NULL DEFAULT 0,
   "created_at" timestamptz NOT NULL DEFAULT (now()),
   "updated_at" timestamptz NOT NULL DEFAULT (now())
 );

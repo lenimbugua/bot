@@ -210,7 +210,7 @@ func (server *Server) getBot(ctx *gin.Context) {
 	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
 
 	if bot.CompanyID != authPayload.CompanyID {
-		err := errors.New("No access rights for that company")
+		err := errors.New("No access rights for that bot")
 		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
 		return
 	}
