@@ -16,6 +16,7 @@ import (
 	db "github.com/lenimbugua/bot/db/sqlc"
 	"github.com/lenimbugua/bot/token"
 	"github.com/lenimbugua/bot/util"
+	"github.com/lib/pq"
 
 	"github.com/stretchr/testify/require"
 )
@@ -161,6 +162,26 @@ func TestCreateCompanyAPI(t *testing.T) {
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusBadRequest, recorder.Code)
+			},
+		},
+		{
+			name: "DuplicatePhoneOrEmail",
+			body: gin.H{
+				"email": company.Email,
+				"name":  company.Name,
+				"Phone": company.Phone,
+			},
+			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, user.CompanyID, time.Minute)
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					CreateCompany(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(db.Company{}, &pq.Error{Code: "23505"})
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusForbidden, recorder.Code)
 			},
 		},
 	}

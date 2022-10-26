@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 )
 
 const createChannel = `-- name: CreateChannel :one
@@ -29,6 +30,16 @@ func (q *Queries) CreateChannel(ctx context.Context, name string) (Channel, erro
 	return i, err
 }
 
+const deleteChannel = `-- name: DeleteChannel :exec
+DELETE FROM channels
+WHERE id = $1
+`
+
+func (q *Queries) DeleteChannel(ctx context.Context, id int32) error {
+	_, err := q.db.ExecContext(ctx, deleteChannel, id)
+	return err
+}
+
 const getChannel = `-- name: GetChannel :one
 SELECT id, name, created_at, updated_at FROM channels
 WHERE name = $1 LIMIT 1
@@ -36,6 +47,72 @@ WHERE name = $1 LIMIT 1
 
 func (q *Queries) GetChannel(ctx context.Context, name string) (Channel, error) {
 	row := q.db.QueryRowContext(ctx, getChannel, name)
+	var i Channel
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const listChannels = `-- name: ListChannels :many
+SELECT id, name, created_at, updated_at FROM channels
+ORDER BY id
+LIMIT $1
+OFFSET $2
+`
+
+type ListChannelsParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) ListChannels(ctx context.Context, arg ListChannelsParams) ([]Channel, error) {
+	rows, err := q.db.QueryContext(ctx, listChannels, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Channel{}
+	for rows.Next() {
+		var i Channel
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateChannel = `-- name: UpdateChannel :one
+UPDATE channels
+SET
+ name = coalesce($1, name),
+ updated_at = now()
+WHERE id = $2 
+RETURNING id, name, created_at, updated_at
+`
+
+type UpdateChannelParams struct {
+	Name sql.NullString `json:"name"`
+	ID   int32          `json:"id"`
+}
+
+func (q *Queries) UpdateChannel(ctx context.Context, arg UpdateChannelParams) (Channel, error) {
+	row := q.db.QueryRowContext(ctx, updateChannel, arg.Name, arg.ID)
 	var i Channel
 	err := row.Scan(
 		&i.ID,

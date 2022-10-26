@@ -18,6 +18,7 @@ type Querier interface {
 	CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteBot(ctx context.Context, id int64) error
+	DeleteChannel(ctx context.Context, id int32) error
 	DeleteCompany(ctx context.Context, id int64) error
 	GetBot(ctx context.Context, id int64) (Bot, error)
 	GetChannel(ctx context.Context, name string) (Channel, error)
@@ -26,9 +27,11 @@ type Querier interface {
 	GetSession(ctx context.Context, id uuid.UUID) (Session, error)
 	GetUser(ctx context.Context, phone string) (User, error)
 	ListAllBots(ctx context.Context, arg ListAllBotsParams) ([]Bot, error)
+	ListChannels(ctx context.Context, arg ListChannelsParams) ([]Channel, error)
 	ListCompanies(ctx context.Context, arg ListCompaniesParams) ([]Company, error)
 	ListCompanyBots(ctx context.Context, arg ListCompanyBotsParams) ([]Bot, error)
 	UpdateBot(ctx context.Context, arg UpdateBotParams) (Bot, error)
+	UpdateChannel(ctx context.Context, arg UpdateChannelParams) (Channel, error)
 	UpdateCompany(ctx context.Context, arg UpdateCompanyParams) (Company, error)
 }
 
