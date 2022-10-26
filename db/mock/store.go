@@ -140,6 +140,20 @@ func (mr *MockStoreMockRecorder) DeleteBot(arg0, arg1 interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteBot", reflect.TypeOf((*MockStore)(nil).DeleteBot), arg0, arg1)
 }
 
+// DeleteChannel mocks base method.
+func (m *MockStore) DeleteChannel(arg0 context.Context, arg1 int32) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteChannel", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteChannel indicates an expected call of DeleteChannel.
+func (mr *MockStoreMockRecorder) DeleteChannel(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteChannel", reflect.TypeOf((*MockStore)(nil).DeleteChannel), arg0, arg1)
+}
+
 // DeleteCompany mocks base method.
 func (m *MockStore) DeleteCompany(arg0 context.Context, arg1 int64) error {
 	m.ctrl.T.Helper()
@@ -259,6 +273,21 @@ func (mr *MockStoreMockRecorder) ListAllBots(arg0, arg1 interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAllBots", reflect.TypeOf((*MockStore)(nil).ListAllBots), arg0, arg1)
 }
 
+// ListChannels mocks base method.
+func (m *MockStore) ListChannels(arg0 context.Context, arg1 db.ListChannelsParams) ([]db.Channel, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListChannels", arg0, arg1)
+	ret0, _ := ret[0].([]db.Channel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListChannels indicates an expected call of ListChannels.
+func (mr *MockStoreMockRecorder) ListChannels(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListChannels", reflect.TypeOf((*MockStore)(nil).ListChannels), arg0, arg1)
+}
+
 // ListCompanies mocks base method.
 func (m *MockStore) ListCompanies(arg0 context.Context, arg1 db.ListCompaniesParams) ([]db.Company, error) {
 	m.ctrl.T.Helper()
@@ -302,6 +331,21 @@ func (m *MockStore) UpdateBot(arg0 context.Context, arg1 db.UpdateBotParams) (db
 func (mr *MockStoreMockRecorder) UpdateBot(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateBot", reflect.TypeOf((*MockStore)(nil).UpdateBot), arg0, arg1)
+}
+
+// UpdateChannel mocks base method.
+func (m *MockStore) UpdateChannel(arg0 context.Context, arg1 db.UpdateChannelParams) (db.Channel, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateChannel", arg0, arg1)
+	ret0, _ := ret[0].(db.Channel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateChannel indicates an expected call of UpdateChannel.
+func (mr *MockStoreMockRecorder) UpdateChannel(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateChannel", reflect.TypeOf((*MockStore)(nil).UpdateChannel), arg0, arg1)
 }
 
 // UpdateCompany mocks base method.

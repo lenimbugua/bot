@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -34,4 +35,30 @@ func (server *Server) createChannel(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, channel)
+}
+
+type getChannelRequest struct {
+	Name string `uri:"name" binding:"required,min=1"`
+}
+
+func (server *Server) getChannel(ctx *gin.Context) {
+	var req getChannelRequest
+
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	channel, err := server.dbStore.GetChannel(ctx, req.Name)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, channel)
+
 }

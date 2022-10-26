@@ -39,6 +39,7 @@ func (server *Server) setupRouter() {
 
 	authRoutes := router.Group("/").Use(authMiddleware(server.tokenMaker))
 	authRoutes.POST("/channels", server.createChannel)
+	authRoutes.GET("/channels/:name", server.getChannel)
 
 	authRoutes.POST("/companies", server.createCompany)
 
