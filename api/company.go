@@ -98,6 +98,13 @@ func (server *Server) getCompanyByID(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+
+	if company.ID != authPayload.CompanyID {
+		err := errors.New("No access rights for that company")
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
 	ctx.JSON(http.StatusOK, company)
 }
 

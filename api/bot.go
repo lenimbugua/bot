@@ -185,3 +185,34 @@ func (server *Server) listCompanyBots(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, bots)
 }
+
+type getBotRequest struct {
+	ID int64 `uri:"id" binding:"required,min=1"`
+}
+
+func (server *Server) getBot(ctx *gin.Context) {
+	var req getBotRequest
+
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	bot, err := server.dbStore.GetBot(ctx, req.ID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+
+	if bot.CompanyID != authPayload.CompanyID {
+		err := errors.New("No access rights for that company")
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+	ctx.JSON(http.StatusOK, bot)
+}

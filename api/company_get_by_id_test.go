@@ -15,59 +15,58 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetBotAPI(t *testing.T) {
+func TestGetCompanyByIDAPI(t *testing.T) {
 	company := randomCompany()
-	bot := randomBot(t, company.ID)
 	user, _ := randomUser(t, company.ID)
 
 	testCases := []struct {
 		name          string
-		botID         int64
+		companyID     int64
 		setupAuth     func(t *testing.T, request *http.Request, tokenMaker token.Maker)
 		buildStubs    func(store *mockdb.MockStore)
 		checkResponse func(t *testing.T, recoder *httptest.ResponseRecorder)
 	}{
 		{
-			name:  "OK",
-			botID: bot.ID,
+			name:      "OK",
+			companyID: company.ID,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
 				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, user.CompanyID, time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					GetBot(gomock.Any(), gomock.Eq(bot.ID)).
+					GetCompanyByID(gomock.Any(), gomock.Eq(company.ID)).
 					Times(1).
-					Return(bot, nil)
+					Return(company, nil)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusOK, recorder.Code)
-				requireBodyMatchBot(t, recorder.Body, bot)
+				requireBodyMatchCompany(t, recorder.Body, company)
 			},
 		},
 		{
-			name:  "UserNotAuthorized",
-			botID: bot.ID,
+			name:      "UserNotAuthorized",
+			companyID: company.ID,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
 				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, user.CompanyID+1, time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					GetBot(gomock.Any(), gomock.Eq(bot.ID)).
+					GetCompanyByID(gomock.Any(), gomock.Eq(company.ID)).
 					Times(1).
-					Return(bot, nil)
+					Return(company, nil)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusUnauthorized, recorder.Code)
 			},
 		},
 		{
-			name:  "NoAuthorization",
-			botID: bot.ID,
+			name:      "NoAuthorization",
+			companyID: company.ID,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					GetBot(gomock.Any(), gomock.Any()).
+					GetCompanyByID(gomock.Any(), gomock.Any()).
 					Times(0)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
@@ -75,46 +74,46 @@ func TestGetBotAPI(t *testing.T) {
 			},
 		},
 		{
-			name:  "NotFound",
-			botID: bot.ID,
+			name:      "NotFound",
+			companyID: company.ID,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
 				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, user.CompanyID, time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					GetBot(gomock.Any(), gomock.Eq(bot.ID)).
+					GetCompanyByID(gomock.Any(), gomock.Eq(company.ID)).
 					Times(1).
-					Return(db.Bot{}, sql.ErrNoRows)
+					Return(db.Company{}, sql.ErrNoRows)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusNotFound, recorder.Code)
 			},
 		},
 		{
-			name:  "InternalError",
-			botID: bot.ID,
+			name:      "InternalError",
+			companyID: company.ID,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
 				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, user.CompanyID, time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					GetBot(gomock.Any(), gomock.Eq(bot.ID)).
+					GetCompanyByID(gomock.Any(), gomock.Eq(company.ID)).
 					Times(1).
-					Return(db.Bot{}, sql.ErrConnDone)
+					Return(db.Company{}, sql.ErrConnDone)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
 			},
 		},
 		{
-			name:  "InvalidID",
-			botID: -20,
+			name:      "InvalidID",
+			companyID: -20,
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
 				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, user.CompanyID, time.Minute)
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					GetBot(gomock.Any(), gomock.Any()).
+					GetCompanyByID(gomock.Any(), gomock.Any()).
 					Times(0)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
@@ -136,7 +135,7 @@ func TestGetBotAPI(t *testing.T) {
 			server := newTestServer(t, store)
 			recorder := httptest.NewRecorder()
 
-			url := fmt.Sprintf("/bots/%d", tc.botID)
+			url := fmt.Sprintf("/companies/%d", tc.companyID)
 			request, err := http.NewRequest(http.MethodGet, url, nil)
 			require.NoError(t, err)
 
