@@ -92,8 +92,8 @@ func TestGetChannelAPI(t *testing.T) {
 			},
 		},
 		{
-			name:        "EmptyName",
-			channelName: "",
+			name:        "InvalidName",
+			channelName: "8",
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
 				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, user.CompanyID, time.Minute)
 			},

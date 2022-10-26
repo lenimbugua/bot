@@ -72,7 +72,7 @@ func (server *Server) updateBot(ctx *gin.Context) {
 
 	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
 	if req.CompanyID != authPayload.CompanyID {
-		err := errors.New("company doesn't belong to the authenticated user")
+		err := errors.New("bot doesn't belong to the authenticated user")
 		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
 		return
 	}

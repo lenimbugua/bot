@@ -16,6 +16,7 @@ import (
 	db "github.com/lenimbugua/bot/db/sqlc"
 	"github.com/lenimbugua/bot/token"
 	"github.com/lenimbugua/bot/util"
+	"github.com/lib/pq"
 
 	"github.com/stretchr/testify/require"
 )
@@ -23,6 +24,7 @@ import (
 func randomChannel() db.Channel {
 	return db.Channel{
 		Name: util.RandomString(6),
+		ID:   int32(util.RandInt(1, 100)),
 	}
 }
 
@@ -100,6 +102,41 @@ func TestCreateChannelAPI(t *testing.T) {
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+			},
+		},
+		{
+			name: "EmptyName",
+			body: gin.H{
+				"name": "",
+			},
+			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, user.CompanyID, time.Minute)
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					CreateChannel(gomock.Any(), gomock.Any()).
+					Times(0)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusBadRequest, recorder.Code)
+			},
+		},
+		{
+			name: "DuplicateName",
+			body: gin.H{
+				"name": channel.Name,
+			},
+			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Phone, user.ID, user.Name, user.CompanyID, time.Minute)
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					CreateChannel(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(db.Channel{}, &pq.Error{Code: "23505"})
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusForbidden, recorder.Code)
 			},
 		},
 	}

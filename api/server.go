@@ -40,6 +40,8 @@ func (server *Server) setupRouter() {
 	authRoutes := router.Group("/").Use(authMiddleware(server.tokenMaker))
 	authRoutes.POST("/channels", server.createChannel)
 	authRoutes.GET("/channels/:name", server.getChannel)
+	authRoutes.GET("/list/channels", server.listChannels)
+	authRoutes.DELETE("/channels/:id", server.deleteChannel)
 
 	authRoutes.POST("/companies", server.createCompany)
 
