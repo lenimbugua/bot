@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	db "github.com/lenimbugua/bot/db/sqlc"
@@ -10,12 +9,12 @@ import (
 )
 
 type createQuestionRequest struct {
-	Question       string    `json:"question" binding:"required"`
-	CompanyID      int64     `json:"company_id" binding:"required",min=1`
-	Type           string    `json:"type" binding:"required"`
-	ParentID       int64     `json:"parent_id" binding:"min=1"`
-	BotID          int64     `json:"bot_id" binding:"required",min=1`
-	NextQuestionID int64     `json:"next_question_id" binding:"min=1"`
+	Question       string `json:"question" binding:"required"`
+	CompanyID      int64  `json:"company_id" binding:"required,min=1"`
+	Type           string `json:"type" binding:"required"`
+	ParentID       int64  `json:"parent_id" binding:"min=1"`
+	BotID          int64  `json:"bot_id" binding:"required,min=1"`
+	NextQuestionID int64  `json:"next_question_id" binding:"min=1"`
 }
 
 func (server *Server) createQuestion(ctx *gin.Context) {
@@ -29,7 +28,7 @@ func (server *Server) createQuestion(ctx *gin.Context) {
 		Question:       req.Question,
 		Type:           req.Type,
 		ParentID:       req.ParentID,
-		BotID:       req.BotID,
+		BotID:          req.BotID,
 		NextQuestionID: req.NextQuestionID,
 	}
 	company, err := server.dbStore.CreateQuestion(ctx, arg)
